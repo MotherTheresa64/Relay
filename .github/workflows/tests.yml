@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Unit tests (zero dependencies, nothing to install)
+        run: npm test
+      - name: Boot the demo and probe it
+        run: |
+          PORT=8080 node src/server.ts &
+          server=$!
+          for _ in $(seq 1 40); do
+            curl -fsS -o /dev/null http://127.0.0.1:8080/health && break
+            sleep 0.5
+          done
+          curl -fsS -o /dev/null http://127.0.0.1:8080/health
+          curl -fsS -o /dev/null http://127.0.0.1:8080/
+          kill "$server"
