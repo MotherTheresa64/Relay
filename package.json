@@ -3,10 +3,23 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Webhook outbox with HMAC signing, SSRF guarding and bounded exponential retries.",
-  "engines": { "node": ">=24" },
-  "scripts": {
-    "test": "node --test"
+  "description": "Webhook outbox with HMAC signing, SSRF guards and bounded retries, plus a browser demo.",
+  "engines": {
+    "node": ">=24"
   },
-  "license": "MIT"
+  "scripts": {
+    "test": "node --test",
+    "start": "node src/server.ts"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MotherTheresa64/relay.git"
+  },
+  "homepage": "https://github.com/MotherTheresa64/relay#readme",
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "zero-dependencies"
+  ]
 }
