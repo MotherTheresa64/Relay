@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Relay — webhook delivery</title>
+<style>
+  :root{--ink:#14181d;--muted:#5b6670;--line:#e2e6ea;--bg:#f6f7f9;--card:#fff;--accent:#2f5bea;--ok:#177245;--bad:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:16px;letter-spacing:-.01em}
+  h1 span{display:block;font-size:12.5px;font-weight:400;color:var(--muted)}
+  main{max-width:900px;margin:0 auto;padding:18px 20px 40px;display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  label{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  input,textarea{padding:9px 11px;font:14px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid var(--line);border-radius:8px;background:#fff;color:inherit;width:100%}
+  textarea{min-height:60px;resize:vertical}
+  button{font:inherit;font-weight:600;padding:8px 13px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer}
+  button.secondary{background:#fff;color:var(--ink);border-color:var(--line)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .row input{flex:1;min-width:200px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{font:12.5px/1.4 ui-monospace,monospace;font-weight:700;padding:4px 9px;border-radius:6px;background:#eef1f4;color:var(--muted)}
+  .chip.ok{background:#f2faf5;color:var(--ok)}
+  .chip.no{background:#fdf4f3;color:var(--bad)}
+  .out{font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;margin:10px 0 0;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;padding:12px;min-height:44px}
+  .hint{color:var(--muted);font-size:12.5px;margin:10px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Relay<span>signed webhook delivery with replay windows and SSRF guards</span></h1>
+</header>
+<main>
+  <section class="card">
+    <label for="url">Endpoint URL</label>
+    <div class="row">
+      <input id="url" type="text" value="https://example.com/hooks/orders" aria-label="endpoint url" />
+    </div>
+    <label style="margin-top:12px" for="event">Event</label>
+    <input id="event" type="text" value="order.created" aria-label="event name" />
+    <label style="margin-top:12px" for="payload">Payload</label>
+    <textarea id="payload">{ "id": 42 }</textarea>
+    <div class="row">
+      <button id="deliver" type="button">Deliver</button>
+      <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:500;font-size:13.5px;margin:0">
+        <input id="flaky" type="checkbox" style="width:auto" /> fail the first attempt (then retry)
+      </label>
+    </div>
+    <div id="result" class="chips"></div>
+    <pre id="detail" class="out">Nothing delivered yet.</pre>
+  </section>
+  <section class="card">
+    <label for="probe">SSRF guard</label>
+    <div class="row">
+      <input id="probe" type="text" value="http://169.254.169.254/latest/meta-data" aria-label="url to check" />
+      <button id="check" class="secondary" type="button">Check URL</button>
+    </div>
+    <div id="probeResult" class="chips"></div>
+    <p class="hint">Cloud metadata addresses, loopback and private ranges are refused before any request is made.</p>
+  </section>
+</main>
+<script>
+  const $ = (selector) => document.querySelector(selector);
+
+  function chip(text, kind) {
+    const node = document.createElement("span");
+    node.className = "chip" + (kind ? " " + kind : "");
+    node.textContent = text;
+    return node;
+  }
+
+  async function deliver() {
+    let payload;
+    try {
+      payload = JSON.parse($("#payload").value || "{}");
+    } catch {
+      $("#detail").textContent = "Payload is not valid JSON.";
+      return;
+    }
+    const res = await fetch("/deliver", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        url: $("#url").value,
+        event: $("#event").value,
+        payload,
+        flaky: $("#flaky").checked,
+      }),
+    });
+    const data = await res.json();
+    const box = $("#result");
+    box.replaceChildren();
+    if (!res.ok) {
+      box.append(chip(data.message ?? "refused", "no"));
+      $("#detail").textContent = JSON.stringify(data, null, 2);
+      return;
+    }
+    const delivery = data.delivery;
+    box.append(
+      chip(delivery.status, delivery.status === "delivered" ? "ok" : "no"),
+      chip("attempts " + delivery.attempts),
+      chip("HTTP " + data.lastStatus),
+    );
+    $("#detail").textContent = JSON.stringify({
+      signature: data.signature,
+      headers: data.headers,
+      body: data.body,
+      result: data.summary,
+    }, null, 2);
+  }
+
+  async function checkUrl() {
+    const res = await fetch("/check", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url: $("#probe").value }),
+    });
+    const data = await res.json();
+    const box = $("#probeResult");
+    box.replaceChildren();
+    box.append(chip(data.safe ? "allowed" : "blocked", data.safe ? "ok" : "no"));
+    if (!data.safe) box.append(chip(data.reason));
+  }
+
+  $("#deliver").addEventListener("click", deliver);
+  $("#check").addEventListener("click", checkUrl);
+</script>
+</body>
+</html>
