@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#f8fafc" />
 <link rel="icon" href="data:," />
 <title>Relay — webhook delivery</title>
 <style>
@@ -27,6 +28,125 @@
   .chip.no{background:#fdf4f3;color:var(--bad)}
   .out{font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;margin:10px 0 0;background:#fbfcfd;border:1px solid var(--line);border-radius:8px;padding:12px;min-height:44px}
   .hint{color:var(--muted);font-size:12.5px;margin:10px 0 0}
+
+  /* --- small screens: phone and tablet --- */
+  @media (max-width: 720px) {
+    body { font-size: 14.5px; }
+    header { padding: 12px 14px; }
+    main { padding: 14px 12px 34px; gap: 13px; }
+    .card { padding: 13px; border-radius: 10px; }
+    .row { flex-direction: column; align-items: stretch; gap: 10px; }
+    .row > div { min-width: 0; flex: 1 1 auto; }
+    .row > button { width: 100%; }
+    input, select, textarea { width: 100%; min-width: 0; font-size: 16px; }
+    button { padding: 10px 12px; }
+    table { display: block; overflow-x: auto; max-width: 100%; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    pre, code, .out, .code, .mono { max-width: 100%; overflow-x: auto; }
+    img, svg, canvas { max-width: 100%; height: auto; }
+    h1 { font-size: 15.5px; }
+  }
+  @media (max-width: 420px) {
+    main { padding: 10px 9px 26px; }
+    .stats { gap: 6px; }
+    .stat, .pill { font-size: 11.5px; }
+    table { font-size: 12px; }
+  }
+
+  /* --- modern theme: shared across all ten demos --- */
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e6e9f0; --bg:#f8fafc; --card:#ffffff;
+    --accent:#4f46e5; --accent-soft:rgba(79,70,229,.12); --ok:#0f766e; --bad:#b91c1c;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 12px 32px -18px rgba(15,23,42,.28);
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 520px at 50% -12%, rgba(79,70,229,.10), transparent 62%),
+      radial-gradient(700px 380px at 100% 0%, rgba(14,165,233,.07), transparent 60%),
+      var(--bg);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;
+    font-feature-settings:"cv02","cv03","cv04","cv11";
+  }
+  header{
+    position:sticky; top:0; z-index:20;
+    padding:16px 24px; border-bottom:1px solid var(--line);
+    background:rgba(255,255,255,.82);
+    backdrop-filter:saturate(180%) blur(12px);
+    -webkit-backdrop-filter:saturate(180%) blur(12px);
+  }
+  h1{font-size:17px;font-weight:650;letter-spacing:-.02em;line-height:1.35}
+  h1 span{margin-top:3px;font-size:12.5px;font-weight:450;color:var(--muted);letter-spacing:0}
+  main{width:100%;max-width:920px;margin:0 auto;padding:28px 22px 64px;gap:18px}
+  .card{
+    padding:22px; border-radius:var(--radius);
+    border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow);
+  }
+  label{margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--muted)}
+  input,select,textarea{
+    padding:10px 12px; font-size:14px; color:var(--ink); background:#fff;
+    border:1px solid var(--line); border-radius:10px;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus,select:focus,textarea:focus,button:focus-visible{
+    outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  button{
+    padding:10px 16px; font-size:14px; font-weight:600; color:#fff; cursor:pointer;
+    border:0; border-radius:10px;
+    background:linear-gradient(180deg,#6159f2,#4f46e5);
+    box-shadow:0 1px 2px rgba(15,23,42,.14), 0 10px 22px -14px rgba(79,70,229,.95);
+    transition:filter .15s ease, transform .12s ease;
+  }
+  button:hover{filter:brightness(1.06)}
+  button:active{transform:translateY(1px)}
+  button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  button.secondary:hover{background:#f1f5f9;filter:none}
+  .pill{
+    padding:6px 12px; border-radius:999px; white-space:nowrap;
+    font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--ok); background:rgba(15,118,110,.08); border:1px solid rgba(15,118,110,.22);
+  }
+  .out{
+    margin:10px 0 0; padding:16px 18px; max-height:440px; overflow:auto; white-space:pre-wrap; word-break:break-word;
+    font:12.5px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:#e2e8f0; background:#0f172a; border:1px solid #1e293b; border-radius:12px;
+  }
+  code{
+    padding:1px 6px; border-radius:6px; font-size:.92em;
+    color:var(--accent); background:var(--accent-soft);
+  }
+  .out code,.out a{color:#a5b4fc;background:none}
+  .hint{margin:14px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th{
+    padding:10px 12px; text-align:left; font-size:11px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    border-bottom:1px solid var(--line);
+  }
+  td{padding:10px 12px;font-size:13.5px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:0}
+  a{color:var(--accent);text-underline-offset:3px}
+  .row{margin-top:12px}
+  .tok,.chip,.score{
+    padding:4px 10px; border-radius:999px; font-size:12px; font-weight:650;
+    border:1px solid var(--line); background:#f1f5f9; color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .chip.ok{color:var(--ok);background:rgba(15,118,110,.08);border-color:rgba(15,118,110,.2)}
+  .chip.no{color:var(--bad);background:rgba(185,28,28,.08);border-color:rgba(185,28,28,.2)}
+  .tok b{color:var(--accent)}
+  @media (max-width:720px){
+    header{padding:14px 16px}
+    main{padding:20px 14px 44px;gap:14px}
+    .card{padding:16px;border-radius:14px}
+    .row{flex-direction:column;align-items:stretch;gap:10px}
+    .row>button,.row>input,.row>select{width:100%!important}
+    input,select,textarea{width:100%!important;font-size:16px}
+    table{display:block;overflow-x:auto;white-space:nowrap}
+  }
 </style>
 </head>
 <body>
