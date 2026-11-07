@@ -1,0 +1,12 @@
+{
+  "name": "@noah/relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Webhook outbox with HMAC signing, SSRF guarding and bounded exponential retries.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
